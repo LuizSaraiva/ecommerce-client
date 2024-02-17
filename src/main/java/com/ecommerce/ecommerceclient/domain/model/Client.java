@@ -1,4 +1,4 @@
-package com.ecommerce.ecommerceclient.domain;
+package com.ecommerce.ecommerceclient.domain.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -22,6 +22,9 @@ public class Client {
 
     @Column(name = "name")
     private String name;
+
+    @Column(name = "cpf")
+    private String cpf;
 
     @Column(name = "created_at")
     @CreationTimestamp
