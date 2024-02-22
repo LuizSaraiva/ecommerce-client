@@ -4,6 +4,7 @@ import com.ecommerce.ecommerceclient.api.mapper.ClientMapper;
 import com.ecommerce.ecommerceclient.api.mapper.dto.ClientDisableRequest;
 import com.ecommerce.ecommerceclient.api.mapper.dto.ClientRequest;
 import com.ecommerce.ecommerceclient.api.mapper.dto.ClientResponse;
+import com.ecommerce.ecommerceclient.api.mapper.dto.ClientRequestUpdate;
 import com.ecommerce.ecommerceclient.domain.exception.ClientAlreadyExistsException;
 import com.ecommerce.ecommerceclient.domain.model.Client;
 import com.ecommerce.ecommerceclient.domain.service.ClientService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -28,7 +30,6 @@ public class ClientController implements ClientControllerApi {
 
     @Autowired
     private ClientMapper clientMapper;
-
 
     @Override
     public ResponseEntity<?> getAllClients() {
@@ -59,6 +60,7 @@ public class ClientController implements ClientControllerApi {
 
         log.info("Received request to create client: {}", clientRequest);
         Client client = clientMapper.clientDtoToDomain(clientRequest);
+
         try{
             Client clientSaved = clientService.saveClient(client);
             ClientResponse clientResponse = clientMapper.clientDomainToResponseDto(clientSaved);
@@ -71,16 +73,21 @@ public class ClientController implements ClientControllerApi {
     }
 
     @Override
-    public ResponseEntity<?> updateClient(ClientRequest clientRequest, UUID id) {
+    public ResponseEntity<?> updateClient(ClientRequestUpdate clientRequestUpdate, UUID id) {
         log.info("Received client {} to update.", id.toString());
         Client client = clientService.getClientById(id);
 
-        BeanUtils.copyProperties(clientRequest, client);
+        BeanUtils.copyProperties(clientRequestUpdate, client);
 
-        Client clientSaved = clientService.updateClient(client);
-        ClientResponse clientResponse = clientMapper.clientDomainToResponseDto(clientSaved);
-        log.info("Response client updated: {}", clientResponse);
-        return ResponseEntity.ok(clientResponse);
+        try{
+            client = clientService.updateClient(client);
+            ClientResponse clientResponse = clientMapper.clientDomainToResponseDto(client);
+            log.info("Response client updated: {}", clientResponse);
+            return ResponseEntity.ok(clientResponse);
+        }catch (ClientAlreadyExistsException e){
+            log.error(e);
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @Override
@@ -88,4 +95,5 @@ public class ClientController implements ClientControllerApi {
         clientService.updateStatusClient(clientDisableRequest.isStatus(), id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("");
     }
+
 }

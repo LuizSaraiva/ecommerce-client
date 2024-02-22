@@ -14,6 +14,5 @@ public interface ClientService {
     void updateStatusClient(boolean status, UUID id);
     Client updateClient(Client client);
 
-    Optional<Client> getClientByCpf(String cpf);
 
 }

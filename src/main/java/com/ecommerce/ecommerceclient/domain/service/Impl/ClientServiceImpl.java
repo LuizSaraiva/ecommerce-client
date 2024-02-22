@@ -6,11 +6,16 @@ import com.ecommerce.ecommerceclient.domain.exception.ClientNotFoundException;
 import com.ecommerce.ecommerceclient.domain.model.Client;
 import com.ecommerce.ecommerceclient.domain.repository.ClientRepository;
 import com.ecommerce.ecommerceclient.domain.service.ClientService;
+import com.ecommerce.ecommerceclient.enums.ActionType;
+import com.ecommerce.ecommerceclient.publishers.ClientEventPublisher;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +26,12 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @Autowired
+    private ClientEventPublisher clientEventPublisher;
+
+    @Autowired
+    private ClientMapper clientMapper;
 
     @Override
     public List<Client> getAllClients() {
@@ -37,16 +48,16 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public Client saveClient(Client client) {
-
-        Optional<Client> clientFound = clientRepository.findClientByCpf(client.getCpf());
-
-        if(clientFound.isPresent()){
-            throw (new ClientAlreadyExistsException(clientFound.get().getId()));
-        }
-
         log.info("Saving client.");
-        Client clientSaved = clientRepository.save(client);
-        return clientSaved;
+        try{
+            Client clientSaved = clientRepository.save(client);
+            clientRepository.flush();
+            clientEventPublisher.publisherClientEvent(clientMapper.clientDomainToEventDto(clientSaved), ActionType.CREATE);
+            return clientSaved;
+        }catch (DataIntegrityViolationException e){
+            throw new ClientAlreadyExistsException(
+                    String.format("Client already exists with CPF %s",client.getCpf().toString()));
+        }
     }
 
     @Override
@@ -54,19 +65,23 @@ public class ClientServiceImpl implements ClientService {
     public void updateStatusClient(boolean status, UUID id) {
         Client client = getClientById(id);
         client.setStatus(status);
-        clientRepository.save(client);
+        Client clientSaved = clientRepository.save(client);
+        clientEventPublisher.publisherClientEvent(clientMapper.clientDomainToEventDto(clientSaved), ActionType.UPDATE);
     }
 
     @Override
     @Transactional
     public Client updateClient(Client client) {
-        log.info("Saving Client.");
-        Client clientSaved = clientRepository.save(client);
-        return clientSaved;
+        log.info("Saving client update.");
+        try{
+            Client clientSaved = clientRepository.save(client);
+            clientRepository.flush();
+            clientEventPublisher.publisherClientEvent(clientMapper.clientDomainToEventDto(clientSaved), ActionType.UPDATE);
+            return clientSaved;
+        }catch (DataIntegrityViolationException e){
+            throw new ClientAlreadyExistsException(
+                    String.format("Client already exists with CPF %s",client.getCpf().toString()));
+        }
     }
 
-    @Override
-    public Optional<Client> getClientByCpf(String cpf) {
-        return clientRepository.findClientByCpf(cpf);
-    }
 }

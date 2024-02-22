@@ -13,4 +13,5 @@ public class ClientAlreadyExistsException extends BusinessException{
     public ClientAlreadyExistsException(UUID id) {
         this(String.format(CLIENT_CPF_ALREADY_EXISTS, id.toString()));
     }
+
 }

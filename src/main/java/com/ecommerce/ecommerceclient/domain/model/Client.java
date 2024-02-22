@@ -2,6 +2,7 @@ package com.ecommerce.ecommerceclient.domain.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -12,6 +13,7 @@ import java.util.UUID;
 @Entity
 @Data
 @Table(name = "client")
+@EqualsAndHashCode
 public class Client {
 
     @Id

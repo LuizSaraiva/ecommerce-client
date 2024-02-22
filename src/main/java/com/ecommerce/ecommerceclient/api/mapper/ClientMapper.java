@@ -1,5 +1,6 @@
 package com.ecommerce.ecommerceclient.api.mapper;
 
+import com.ecommerce.ecommerceclient.api.mapper.dto.ClientEventDto;
 import com.ecommerce.ecommerceclient.api.mapper.dto.ClientRequest;
 import com.ecommerce.ecommerceclient.api.mapper.dto.ClientResponse;
 import com.ecommerce.ecommerceclient.domain.model.Client;
@@ -16,5 +17,7 @@ public interface ClientMapper {
     List<ClientRequest> listClientDomainToDto(List<Client> clientList);
     List<Client> listClientDtoToDomain(List<ClientRequest> clientRequests);
     List<ClientResponse> listClientDomainToResponseDto(List<Client> clientList);
+
+    ClientEventDto clientDomainToEventDto(Client client);
 
 }
